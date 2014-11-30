@@ -9,7 +9,7 @@ t.get("/1/boards/targetboard/actions", { filter: "createCard", since: d.toISOStr
   console.log("Cards added today: " + data._value);
   //console.log(data.actions[0].data);
   var count = data._value;
-  t.get("/1/boards/targetboard/actions", { filter: "updateCard:closed", since: d.toISOString(), format: "count" }, function(err, data) {
+  t.get("/1/lists/donelist/actions", { filter: "updateCard:closed", since: d.toISOString(), format: "count" }, function(err, data) {
     if(err) throw err;
     console.log("Cards archived today: " + data._value);
   });
