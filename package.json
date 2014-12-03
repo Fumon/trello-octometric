@@ -3,6 +3,7 @@
   "description": "A small project to track trello board metrics",
   "author": "Jade Felicity Bilkey <herself@thefumon.com>",
   "dependencies": {
-    "node-trello": "1.0.x"
+    "node-trello": "1.0.x",
+    "bluebird": "2.3.x"
   }
 }
