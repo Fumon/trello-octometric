@@ -4,6 +4,7 @@
   "author": "Jade Felicity Bilkey <herself@thefumon.com>",
   "dependencies": {
     "node-trello": "1.0.x",
-    "bluebird": "2.3.x"
+    "bluebird": "2.3.x",
+    "pg": "3.6.x"
   }
 }
