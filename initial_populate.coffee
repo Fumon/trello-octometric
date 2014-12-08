@@ -26,16 +26,17 @@ gettrello = (held, args...) ->
 
 # Launch an API call with a "before" date
 # If launched without a date, will receive the latest cards
-getCardsBefore = (date) ->
-  console.log "Requesting cards before: " + date
+getCards = (before, since) ->
+  console.log "[+] Requesting cards " + before + " - " + since
   filterParams =
     filter: "all"
     format: "list"
     actions: "updateCard:closed,createCard"
     fields: "closed,idList,name,dateLastActivity",
-    limit: 5
+    limit: 1000
 
-  filterParams.before = date.toISOString() if date?
+  filterParams.before = before.toISOString()
+  filterParams.since = since.toISOString()
 
   # Return gettrello promise
   gettrello {}, "/1/boards/targetboard/cards", filterParams
@@ -43,6 +44,8 @@ getCardsBefore = (date) ->
 
 # Insert a card into the database
 insertCard = (card) ->
+  if card.id == '5473baac31efae1dfb099c94'
+    console.log card
   (success, error) ->
     # Database connection
     pg.connect
@@ -85,10 +88,10 @@ insertCard = (card) ->
             return
           # Release the database connection
           done()
-          success new Date(card.dateLastActivity)
+          success()
 
 # Recurse for optional depth iterations
-recurseCards = (cards, depth) ->
+processCards = (cards) ->
     # Receive results
     cards.then((val) ->
       return_list = []
@@ -100,29 +103,37 @@ recurseCards = (cards, depth) ->
     , (err) ->
       # Got an error from Trello call
       throw err
-    ).then((val) ->
-      new Promise (resolve, reject) ->
-        Promise.all(val).then((success) ->
-          console.log "Successes: " +  success.length
-          success.sort (a, b) ->
-            # Reverse sort to find oldest
-            a - b
-          resolve(success[0])
-        , (fail) ->
-          reject(fail)
-        )
-    ).then((val) ->
-        depth -= 1
-        if depth == 0
-          pg.end()
-          return
-        recurseCards getCardsBefore(val), depth
-      , (err) ->
-        console.log "Promise returns bad"
     )
-
+    
 
 # Main
 
-# Launch a call
-recurseCards getCardsBefore(new Date()), 3
+# Generate date ranges
+now = new Date()
+date = now.getDate()
+dates = [0..100].map (c) ->
+  b = new Date(now.getTime())
+  b.setDate(date - c)
+  s = new Date(now.getTime())
+  s.setDate(date - (c + 1))
+  [b, s]
+
+
+requests = []
+for d, i in dates
+  do (d) ->
+    requests.push(processCards(getCards(d[0], d[1])).then (val) ->
+        new Promise (resolve, reject) ->
+          Promise.all(val).then((success) ->
+            console.log "[=] (" + i + ") " + d[0] + " - " + d[1] + ":\t" + success.length + " cards"
+            resolve()
+          , (fail) ->
+            reject(fail)
+          )
+    )
+
+Promise.all(requests).then () ->
+  console.log "End"
+  pg.end()
+, (err) ->
+  console.error err
