@@ -6,6 +6,7 @@ Promise = require "bluebird"
 # Some constant data
 
 rightnow = 'donelist'
+done = 'donelist'
 
 t = new trello "appkey", "usertoken"
 
@@ -30,20 +31,20 @@ gettrello = (held, args...) ->
 
 # Launch an API call with a "before" date
 # If launched without a date, will receive the latest cards
-getCards = (before, since) ->
-  console.log "[+] Requesting cards " + before + " - " + since
+getCards = (held, before, since) ->
+  console.log "[+] Requesting 1000 cards before: #{before}"
   filterParams =
     filter: "all"
     format: "list"
     actions: "updateCard:closed,createCard,copyCard,convertToCardFromCheckItem,moveCardToBoard"
-    fields: "closed,name,dateLastActivity",
+    fields: "closed,idList,name,dateLastActivity",
     limit: 1000
 
   filterParams.before = before.toISOString()
   filterParams.since = since.toISOString() if since?
 
   # Return gettrello promise
-  gettrello {}, "/1/boards/targetboard/cards", filterParams
+  gettrello held, "/1/boards/targetboard/cards", filterParams
 
 
 # Insert a card into the database
@@ -70,7 +71,7 @@ insertCard = (card) ->
           f = action for action in card.actions when action.type == 'updateCard'
           action = f
           try
-            if action.data.list.id == rightnow
+            if card.idList == rightnow || card.idList == 'donelist'
               finished = true
             closed_date = action.date
             dates.push new Date(closed_date)
@@ -103,42 +104,29 @@ processCards = (cards) ->
         do (card) ->
           return_list.push new Promise insertCard(card)
       # Return a list of promises
-      return_list
+      Promise.resolve {list: return_list, extra: val.extra}
     , (err) ->
       # Got an error from Trello call
-      throw err
-    )
+      Promise.reject(err)
+    ).then (val) ->
+        Promise.all(val.list).then((success) ->
+          if success.length <= 0
+            console.log "[i] (#{val.extra.iteration})\t Returned 0 new cards"
+            pg.end()
+            return
+          success.sort sortOldest
+          console.log "[=] (#{val.extra.iteration})\t#{val.extra.time}-#{success[0]} #{success.length} cards"
+          # Calculate a sane time interval just in case. 
+          tdiff = Math.floor((val.extra.time - success[0]) * (1/3))
+          newtime = new Date(success[0].getTime() + tdiff)
+          processCards(getCards {time: newtime, iteration: (val.extra.iteration + 1)}, newtime)
+        , (fail) ->
+          console.error fail
+        )
+    
+
     
 
 # Main
-
-# Generate date ranges
 now = new Date()
-date = now.getDate()
-dates = [0..100].map (c) ->
-  b = new Date(now.getTime())
-  b.setDate(date - c)
-  s = new Date(now.getTime())
-  s.setDate(date - (c + 1))
-  [b, s]
-
-
-requests = []
-for d, i in dates
-  do (d, i) ->
-    requests.push(processCards(getCards(d[0], d[1])).then (val) ->
-        new Promise (resolve, reject) ->
-          Promise.all(val).then((success) ->
-            console.log "[=] (" + i + ") " + d[0] + " - " + d[1] + ":\t" + success.length + " cards"
-            success.sort sortOldest
-            resolve(success[0])
-          , (fail) ->
-            reject(fail)
-          )
-    )
-
-Promise.all(requests).then () ->
-  console.log "End"
-  pg.end()
-, (err) ->
-  console.error err
+processCards(getCards {time: now, iteration: 0}, now)
