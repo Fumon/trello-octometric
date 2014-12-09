@@ -1,14 +1,10 @@
 trello = require 'node-trello'
 util = require 'util'
 pg = require 'pg'
-Promise = require "bluebird"
+Promise = require 'bluebird'
 
-# Some constant data
-
-rightnow = 'donelist'
-done = 'donelist'
-
-t = new trello "appkey", "usertoken"
+# Types of card creation events
+createEvents = ['createCard', 'convertToCardFromCheckItem', 'copyCard', 'moveCardToBoard']
 
 # Sort dates in reverse (oldest first)
 sortOldest = (a, b) ->
@@ -25,6 +21,8 @@ tresolve = (held, resolve, reject) ->
 
 # Trello api call returning promise
 gettrello = (held, args...) ->
+  # TODO: Ugly, need to redo
+  t = new trello process.env['appkey'], process.env['usertoken']
   return new Promise (resolve,reject) ->
     args.push tresolve(held, resolve, reject)
     t.get args...
@@ -38,29 +36,25 @@ getCards = (held, before, since) ->
     format: "list"
     actions: "updateCard:closed,createCard,copyCard,convertToCardFromCheckItem,moveCardToBoard"
     fields: "closed,idList,name,dateLastActivity",
-    limit: 1000
+    limit: 1000 # TODO: Make this into settable property
 
   filterParams.before = before.toISOString()
   filterParams.since = since.toISOString() if since?
 
   # Return gettrello promise
-  gettrello held, "/1/boards/targetboard/cards", filterParams
+  gettrello held, "/1/boards/#{process.env['targetboard']}/cards", filterParams
 
 
 # Insert a card into the database
 insertCard = (card) ->
   (success, error) ->
     # Database connection
-    pg.connect
-      user: 'postgresuser'
-      database: 'database'
-      host: 'localhost'
-      ssl: false,
+    pg.connect process.env['pgConnectString'],
       (err, client, done) ->
         dates = []
         # Grab the creation date
         creation_date = null
-        creation_date = action.date for action in card.actions when action.type == 'createCard' || action.type == 'convertToCardFromCheckItem' || action.type == 'copyCard' || action.type == 'moveCardToBoard'
+        creation_date = action.date for action in card.actions when action.type in createEvents
         dates.push new Date(creation_date)
 
         # If the card is closed, find the date and whether it was in 'rightnow'
@@ -71,7 +65,7 @@ insertCard = (card) ->
           f = action for action in card.actions when action.type == 'updateCard'
           action = f
           try
-            if card.idList == rightnow || card.idList == 'donelist'
+            if card.idList in process.env['donelists']
               finished = true
             closed_date = action.date
             dates.push new Date(closed_date)
@@ -128,5 +122,6 @@ processCards = (cards) ->
     
 
 # Main
-now = new Date()
-processCards(getCards {time: now, iteration: 0}, now)
+figaro = require('figaro').parse null, () ->
+  now = new Date()
+  processCards(getCards {time: now, iteration: 0}, now)
