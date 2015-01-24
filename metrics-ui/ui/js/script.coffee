@@ -21,8 +21,8 @@ require ['jquery', 'd3', 'react', 'components/linechart-react'], ($, d3, React, 
         data: @state.todoTotals
         margin:
           top: 5
-          right: 5
-          bottom: 25
+          right: 15
+          bottom: 50
           left: 30
         width: 500
         height: 300
