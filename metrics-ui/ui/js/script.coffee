@@ -1,21 +1,31 @@
 requirejs.config
   paths:
+    components: 'components'
     jquery: 'https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min'
     react: 'https://fb.me/react-0.12.2'
     d3: 'https://cdnjs.cloudflare.com/ajax/libs/d3/3.4.6/d3'
 
-require ['jquery', 'd3', 'react'], ($, d3, React) ->
+require ['jquery', 'd3', 'react', 'components/linechart-react'], ($, d3, React, linechart) ->
   {div, h4, p} = React.DOM
 
   Graph = React.createFactory React.createClass
+    displayName: 'graph'
     getInitialState: ->
-      todoTotals: {}
+      todoTotals: [] 
     componentDidMount: ->
-      $.get '/api/totals/last/5', (result) ->
-        data = result[0]
-        this.setState {data: data}
+      $.get '/api/totals/last/10', (result) =>
+        data = result
+        @setState {todoTotals: data}
     render: ->
-      div id: 'chart'
+      linechart
+        data: @state.todoTotals
+        margin:
+          top: 5
+          right: 5
+          bottom: 25
+          left: 30
+        width: 500
+        height: 300
 
   Ui = React.createFactory React.createClass
     render: ->
@@ -25,7 +35,7 @@ require ['jquery', 'd3', 'react'], ($, d3, React) ->
             (h4 className: "section-heading", "Basic Daily Report"),
             (p className: "section-description",
               "This graph shows the total number of tasks on the todo board over time."),
-            (Graph)
+            (Graph {})
           ]
         ]
       ]

@@ -1,2 +1,17 @@
+.d3 .line {
+  fill: none;
+  stroke: steelblue;
+  stroke-width: 2
+}
 
+.d3 .axis text {
+  font: 10px sans-serif;
+  fill: black;
+}
 
+.d3 .axis path,
+.d3 .axis line {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+}
