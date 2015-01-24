@@ -65,7 +65,7 @@ insertCard = (card) ->
           f = action for action in card.actions when action.type == 'updateCard'
           action = f
           try
-            if card.idList in process.env['donelists']
+            if card.idList in process.env['donelists'].split(',')
               finished = true
             closed_date = action.date
             dates.push new Date(closed_date)
