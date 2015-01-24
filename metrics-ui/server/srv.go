@@ -69,6 +69,27 @@ func main() {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprint(w, output)
 	})
+
+	r.HandleFunc("/api/diffs/last/{num}", func(w http.ResponseWriter, r *http.Request) {
+		// Grab vars
+		vars := mux.Vars(r)
+
+		var output string
+		// This is bad... don't do this.... omg
+		query := fmt.Sprintf(`SELECT json_agg(r) FROM (select EXTRACT(epoch FROM day) as day, up_count, down_count, finished_count from trello.dailytallies order by day DESC limit %s) r;`, vars["num"])
+		err := db.QueryRow(query).Scan(&output)
+
+		if err != nil {
+			log.Println("Error retriving from DB, ", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintln(w, "Error retriving from DB, ", err)
+			return
+		}
+
+		// Print out returned
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, output)
+	})
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("../ui")))
 	http.Handle("/", r)
 
