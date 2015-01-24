@@ -13,7 +13,7 @@ require ['jquery', 'd3', 'react', 'components/linechart-react'], ($, d3, React, 
     getInitialState: ->
       todoTotals: [] 
     componentDidMount: ->
-      $.get '/api/totals/last/10', (result) =>
+      $.get '/api/totals/last/60', (result) =>
         data = result
         @setState {todoTotals: data}
     render: ->
