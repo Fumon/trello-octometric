@@ -24,7 +24,7 @@ require ['jquery', 'd3', 'react', 'components/linechart-react'], ($, d3, React, 
           right: 15
           bottom: 50
           left: 30
-        width: 500
+        width: '100%'
         height: 300
 
   Ui = React.createFactory React.createClass

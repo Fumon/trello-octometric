@@ -1,8 +1,8 @@
-define ['d3'], (d3) ->
+define ['d3', 'jquery'], (d3, $) ->
   plotheight: () ->
     @props.height - @props.margin.top - @props.margin.bottom
   plotwidth: () ->
-    @props.width - @props.margin.left - @props.margin.right
+    $(@el).find('.d3').width() - @props.margin.left - @props.margin.right
   create: (el, props, state) ->
     @props = props
     @el = el
