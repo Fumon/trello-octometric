@@ -40,7 +40,7 @@ define ['d3'], (d3) ->
 
   scales: (state) ->
     xscale: d3.scale.ordinal()
-      .rangePoints([0, @plotwidth()])
+      .rangePoints([@plotwidth(), 0])
       .domain(state.data.map (d) -> "#{d.day}")
     yscale: d3.scale.linear()
       .range([@plotheight(), 0])
