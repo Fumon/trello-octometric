@@ -4,14 +4,16 @@ define ['d3', 'react', 'components/linechart-d3'], (d3, react, chart) ->
     propTypes:
       data: react.PropTypes.array
       margin: react.PropTypes.object
-    getChartProps: () ->
-      margin: @props.margin
-      width: @props.width
-      height: @props.height
+      domainmargin: react.PropTypes.number
     
     componentDidMount: () ->
       chart.create @getDOMNode(),
-        @getChartProps(),
+        {
+          domainmargin: @props.domainmargin
+          margin: @props.margin
+          width: @props.width
+          height: @props.height
+        },
         data: @props.data
     componentDidUpdate: () ->
       chart.update @getDOMNode(),

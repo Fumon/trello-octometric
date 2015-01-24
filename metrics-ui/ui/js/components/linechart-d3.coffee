@@ -39,12 +39,22 @@ define ['d3', 'jquery'], (d3, $) ->
     @drawplot(el, scales, state)
 
   scales: (state) ->
+    # yscale adjust
+    ydatamin = d3.min(state.data, (d) => d.end_of_day_total)
+    ymin = Math.max 0, (ydatamin - @props.domainmargin)
+
+    ymax = (d3.max(state.data, (d) => d.end_of_day_total) + @props.domainmargin)
+
+    if isNaN(ymin) or isNaN(ymax)
+      ymin = 0
+      ymax = 0
+
     xscale: d3.scale.ordinal()
       .rangePoints([@plotwidth(), 0])
       .domain(state.data.map (d) -> "#{d.day}")
     yscale: d3.scale.linear()
       .range([@plotheight(), 0])
-      .domain([90, d3.max(state.data, (d) -> d.end_of_day_total) + 20])
+      .domain([ymin, ymax])
 
   axes: (el, scales) ->
     # Render axes
