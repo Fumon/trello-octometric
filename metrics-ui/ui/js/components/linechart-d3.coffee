@@ -39,6 +39,14 @@ define ['d3', 'jquery'], (d3, $) ->
     @drawplot(el, scales, state)
 
   scales: (state) ->
+    # xscale 
+    xmin = 0
+    xmax = 0
+    if state.data.length > 0
+      xmin = new Date(state.data[state.data.length - 1].day * 1000)
+      xmax = new Date(state.data[0].day * 1000)
+
+
     # yscale adjust
     ydatamin = d3.min(state.data, (d) => d.end_of_day_total)
     ymin = Math.max 0, (ydatamin - @props.domainmargin)
@@ -49,9 +57,9 @@ define ['d3', 'jquery'], (d3, $) ->
       ymin = 0
       ymax = 0
 
-    xscale: d3.scale.ordinal()
-      .rangePoints([@plotwidth(), 0])
-      .domain(state.data.map (d) -> "#{d.day}")
+    xscale: d3.time.scale()
+      .range([0, @plotwidth()])
+      .domain([xmin, xmax])
     yscale: d3.scale.linear()
       .range([@plotheight(), 0])
       .domain([ymin, ymax])
@@ -61,6 +69,7 @@ define ['d3', 'jquery'], (d3, $) ->
     xaxis = d3.svg.axis()
       .scale(scales.xscale)
       .orient('bottom')
+      .tickFormat(d3.time.format('%b %d'))
     yaxis = d3.svg.axis()
       .scale(scales.yscale)
       .orient('left')
@@ -77,7 +86,7 @@ define ['d3', 'jquery'], (d3, $) ->
   drawplot: (el,scales,state) ->
     # Create a line function
     lfunc = d3.svg.line()
-      .x((d) => scales.xscale("#{d.day}"))
+      .x((d) => scales.xscale(new Date(d.day*1000)))
       .y((d) => scales.yscale(d.end_of_day_total))
       .interpolate('linear')
 
