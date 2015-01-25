@@ -12,14 +12,14 @@ require ['jquery', 'd3', 'react', 'components/linechart-react'], ($, d3, React, 
     displayName: 'graph'
     getInitialState: ->
       todoTotals: [] 
-    update: ->
-      $.get "#{@props.urlbase}/#{@props.daysBack}", ((result) ->
+    update: (url) ->
+      $.get url, ((result) ->
         data = result
         @setState {todoTotals: data}).bind(this)
     componentDidMount: ->
-      @update()
-    componentDidUpdate: ->
-      @update()
+      @update("#{@props.urlbase}/#{@props.daysBack}")
+    componentWillReceiveProps: (nextProps) ->
+      @update("#{nextProps.urlbase}/#{nextProps.daysBack}")
     render: ->
       linechart
         data: @state.todoTotals
@@ -46,7 +46,7 @@ require ['jquery', 'd3', 'react', 'components/linechart-react'], ($, d3, React, 
           id: "timeinput"
           type: "text"
           ref: "timeinput"),
-        (React.DOM.input 
+        (React.DOM.input
           className: "button-primary"
           value: "update"
           type: "submit"
@@ -57,7 +57,10 @@ require ['jquery', 'd3', 'react', 'components/linechart-react'], ($, d3, React, 
     getInitialState: ->
       daysBack: 60
     updateLinechartTime: (val) ->
-      @setState daysBack: val
+      parse = parseInt val
+      if isNaN(parse) or parse < 1
+        parse = 60
+      @setState daysBack: parse
     render: ->
       div className: "section", [
         div className: "container", [
