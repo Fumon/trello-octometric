@@ -55,8 +55,8 @@ func main() {
 
 		var output string
 		// This is bad... don't do this.... omg
-		query := fmt.Sprintf(`SELECT json_agg(r) FROM (select EXTRACT(epoch FROM day) as day, end_of_day_total from trello.dailytallies order by day DESC limit %s) r;`, vars["num"])
-		err := db.QueryRow(query).Scan(&output)
+		query := `SELECT json_agg(r) FROM (select EXTRACT(epoch FROM day) as day, end_of_day_total from trello.dailytallies order by day DESC limit $1) r;`
+		err := db.QueryRow(query, vars["num"]).Scan(&output)
 
 		if err != nil {
 			log.Println("Error retriving from DB, ", err)
@@ -76,8 +76,8 @@ func main() {
 
 		var output string
 		// This is bad... don't do this.... omg
-		query := fmt.Sprintf(`SELECT json_agg(r) FROM (select EXTRACT(epoch FROM day) as day, up_count, down_count, finished_count from trello.dailytallies order by day DESC limit %s) r;`, vars["num"])
-		err := db.QueryRow(query).Scan(&output)
+		query := `SELECT json_agg(r) FROM (select EXTRACT(epoch FROM day) as day, up_count, down_count, finished_count from trello.dailytallies order by day DESC limit $1) r;`
+		err := db.QueryRow(query, vars["num"]).Scan(&output)
 
 		if err != nil {
 			log.Println("Error retriving from DB, ", err)
