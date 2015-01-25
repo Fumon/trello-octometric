@@ -1,4 +1,4 @@
-define ['d3', 'react', 'components/linechart-d3'], (d3, react, chart) ->
+define ['d3', 'react', 'jquery', 'components/linechart-d3'], (d3, react, $, chart) ->
   react.createFactory react.createClass
     displayName: 'lineplot'
     propTypes:
@@ -18,9 +18,15 @@ define ['d3', 'react', 'components/linechart-d3'], (d3, react, chart) ->
           height: @props.height
         },
         data: @props.data
-    componentDidUpdate: () ->
+
+        # Create resize bind
+        $(window).resize @doChartUpdate
+    doChartUpdate: () ->
       @chart.update @getDOMNode(),
         data: @props.data
+
+    componentDidUpdate: () ->
+      @doChartUpdate()
     
     render: () ->
       react.DOM.div className: 'linechart'
