@@ -12,10 +12,14 @@ require ['jquery', 'd3', 'react', 'components/linechart-react'], ($, d3, React, 
     displayName: 'graph'
     getInitialState: ->
       todoTotals: [] 
-    componentDidMount: ->
-      $.get "#{@props.urlbase}/60", ((result) ->
+    update: ->
+      $.get "#{@props.urlbase}/#{@props.daysBack}", ((result) ->
         data = result
         @setState {todoTotals: data}).bind(this)
+    componentDidMount: ->
+      @update()
+    componentDidUpdate: ->
+      @update()
     render: ->
       linechart
         data: @state.todoTotals
@@ -29,7 +33,31 @@ require ['jquery', 'd3', 'react', 'components/linechart-react'], ($, d3, React, 
         domainmargin: 20
         datanames: @props.datanames
 
+  TimeAdjust = React.createFactory React.createClass
+    displayName: 'timeAdjust'
+    update: ->
+      @props.update $(@refs.timeinput.getDOMNode()).val()
+    render: ->
+      div {}, [
+        (React.DOM.label htmlFor: "timeinput", "Days back in time"),
+        (React.DOM.input 
+          className: "u-full-width"
+          placeholder: "60"
+          id: "timeinput"
+          type: "text"
+          ref: "timeinput"),
+        (React.DOM.input 
+          className: "button-primary"
+          value: "update"
+          type: "submit"
+          onClick: @update)
+      ]
+
   Ui = React.createFactory React.createClass
+    getInitialState: ->
+      daysBack: 60
+    updateLinechartTime: (val) ->
+      @setState daysBack: val
     render: ->
       div className: "section", [
         div className: "container", [
@@ -37,12 +65,15 @@ require ['jquery', 'd3', 'react', 'components/linechart-react'], ($, d3, React, 
             (h4 className: "section-heading", "Basic Daily Report"),
             (p className: "section-description",
               "This graph shows the total number of tasks on the todo board over time."),
-            (Graph {urlbase: '/api/totals/last', datanames: ['end_of_day_total']})
+            (Graph {urlbase: '/api/totals/last', daysBack: @state.daysBack, datanames: ['end_of_day_total']})
           ],
           div className: "row", [
             (p className: "section-description",
               "Up and finished counts per day."),
-            (Graph {urlbase: '/api/diffs/last', datanames: ['up_count', 'finished_count']})
+            (Graph {urlbase: '/api/diffs/last', daysBack: @state.daysBack, datanames: ['up_count', 'finished_count']})
+          ],
+          div className: "row", [
+            (TimeAdjust update: @updateLinechartTime)
           ]
         ]
       ]
