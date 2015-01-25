@@ -54,7 +54,6 @@ func main() {
 		vars := mux.Vars(r)
 
 		var output string
-		// This is bad... don't do this.... omg
 		query := `SELECT json_agg(r) FROM (select EXTRACT(epoch FROM day) as day, end_of_day_total from trello.dailytallies order by day DESC limit $1) r;`
 		err := db.QueryRow(query, vars["num"]).Scan(&output)
 
@@ -75,9 +74,25 @@ func main() {
 		vars := mux.Vars(r)
 
 		var output string
-		// This is bad... don't do this.... omg
 		query := `SELECT json_agg(r) FROM (select EXTRACT(epoch FROM day) as day, up_count, down_count, finished_count from trello.dailytallies order by day DESC limit $1) r;`
 		err := db.QueryRow(query, vars["num"]).Scan(&output)
+
+		if err != nil {
+			log.Println("Error retriving from DB, ", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintln(w, "Error retriving from DB, ", err)
+			return
+		}
+
+		// Print out returned
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, output)
+	})
+
+	r.HandleFunc("/api/diffs/today", func(w http.ResponseWriter, r *http.Request) {
+		var output string
+		query := `SELECT to_json(r) FROM (select EXTRACT(epoch FROM day) as day, end_of_day_total, up_count, down_count, finished_count from trello.dailytallies where trello.dailytallies.day = date_trunc('day', NOW())) r;`
+		err := db.QueryRow(query).Scan(&output)
 
 		if err != nil {
 			log.Println("Error retriving from DB, ", err)
