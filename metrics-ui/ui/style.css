@@ -1,7 +1,14 @@
-.d3 .line {
+.d3 path {
   fill: none;
-  stroke: steelblue;
   stroke-width: 2
+}
+
+.d3 .line0 {
+  stroke: steelblue;
+}
+
+.d3 .line1 {
+  stroke: #ff7f0e;
 }
 
 .d3 .axis text {

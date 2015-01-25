@@ -13,9 +13,9 @@ require ['jquery', 'd3', 'react', 'components/linechart-react'], ($, d3, React, 
     getInitialState: ->
       todoTotals: [] 
     componentDidMount: ->
-      $.get '/api/totals/last/60', (result) =>
+      $.get "#{@props.urlbase}/60", ((result) ->
         data = result
-        @setState {todoTotals: data}
+        @setState {todoTotals: data}).bind(this)
     render: ->
       linechart
         data: @state.todoTotals
@@ -26,7 +26,8 @@ require ['jquery', 'd3', 'react', 'components/linechart-react'], ($, d3, React, 
           left: 30
         width: '100%'
         height: 300
-        domainmargin: 30
+        domainmargin: 20
+        datanames: @props.datanames
 
   Ui = React.createFactory React.createClass
     render: ->
@@ -36,7 +37,12 @@ require ['jquery', 'd3', 'react', 'components/linechart-react'], ($, d3, React, 
             (h4 className: "section-heading", "Basic Daily Report"),
             (p className: "section-description",
               "This graph shows the total number of tasks on the todo board over time."),
-            (Graph {})
+            (Graph {urlbase: '/api/totals/last', datanames: ['end_of_day_total']})
+          ],
+          div className: "row", [
+            (p className: "section-description",
+              "Up and finished counts per day."),
+            (Graph {urlbase: '/api/diffs/last', datanames: ['up_count', 'finished_count']})
           ]
         ]
       ]

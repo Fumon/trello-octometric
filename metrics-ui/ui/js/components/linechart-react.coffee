@@ -7,8 +7,11 @@ define ['d3', 'react', 'components/linechart-d3'], (d3, react, chart) ->
       domainmargin: react.PropTypes.number
     
     componentDidMount: () ->
-      chart.create @getDOMNode(),
+      @chart = new chart.linechart
+        
+      @chart.create @getDOMNode(),
         {
+          datanames: @props.datanames
           domainmargin: @props.domainmargin
           margin: @props.margin
           width: @props.width
@@ -16,7 +19,7 @@ define ['d3', 'react', 'components/linechart-d3'], (d3, react, chart) ->
         },
         data: @props.data
     componentDidUpdate: () ->
-      chart.update @getDOMNode(),
+      @chart.update @getDOMNode(),
         data: @props.data
     
     render: () ->
