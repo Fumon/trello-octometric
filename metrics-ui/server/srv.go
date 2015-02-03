@@ -45,10 +45,6 @@ func main() {
 
 	// Restful handler
 	r := mux.NewRouter()
-	r.HandleFunc("/api", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintln(w, "dla;jfkdlsajflkdsa;jfk;ldsajfklds;a")
-	})
-
 	r.HandleFunc("/api/totals/last/{num}", func(w http.ResponseWriter, r *http.Request) {
 		// Grab vars
 		vars := mux.Vars(r)
