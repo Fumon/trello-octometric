@@ -1,28 +1,30 @@
 requirejs.config
   paths:
     components: 'components'
+    calheatmap: '../libs/cal-heatmap.min'
     jquery: 'https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min'
     react: 'https://fb.me/react-0.12.2'
     d3: 'https://cdnjs.cloudflare.com/ajax/libs/d3/3.4.6/d3'
 
-require ['jquery', 'd3', 'react', 'components/linechart-react'], ($, d3, React, linechart) ->
+require ['jquery', 'd3', 'react', 'components/linechart-react',
+  'components/heatmap-react'], ($, d3, React, linechart, heatmap) ->
   {div, h4, p} = React.DOM
 
   Graph = React.createFactory React.createClass
     displayName: 'graph'
     getInitialState: ->
-      todoTotals: [] 
+      data: []
     update: (url) ->
       $.get url, ((result) ->
         data = result
-        @setState {todoTotals: data}).bind(this)
+        @setState {data: data}).bind(this)
     componentDidMount: ->
       @update("#{@props.urlbase}/#{@props.daysBack}")
     componentWillReceiveProps: (nextProps) ->
       @update("#{nextProps.urlbase}/#{nextProps.daysBack}")
     render: ->
       linechart
-        data: @state.todoTotals
+        data: @state.data
         margin:
           top: 5
           right: 15
@@ -31,6 +33,23 @@ require ['jquery', 'd3', 'react', 'components/linechart-react'], ($, d3, React, 
         width: '100%'
         height: 300
         domainmargin: 20
+        datanames: @props.datanames
+
+  Heatmap = React.createFactory React.createClass
+    displayName: 'heatmap'
+    getInitialState: ->
+      data: []
+    update: (url) ->
+      $.get url, ((result) ->
+        data = result
+        @setState {data: data}).bind(this)
+    componentDidMount: ->
+      @update("#{@props.urlbase}/#{@props.daysBack}")
+    componentWillReceiveProps: (nextProps) ->
+      @update("#{nextProps.urlbase}/#{nextProps.daysBack}")
+    render: ->
+      heatmap
+        data: @state.data
         datanames: @props.datanames
 
   TimeAdjust = React.createFactory React.createClass
@@ -74,6 +93,11 @@ require ['jquery', 'd3', 'react', 'components/linechart-react'], ($, d3, React, 
             (p className: "section-description",
               "Up and finished counts per day."),
             (Graph {urlbase: '/api/diffs/last', daysBack: @state.daysBack, datanames: ['up_count', 'finished_count']})
+          ],
+          div className: "row", [
+            (p className: "section-description",
+              "Heatmap of finished tasks per day."),
+            (Heatmap {urlbase: '/api/diffs/last', daysBack: @state.daysBack, datanames: ['finished_count']})
           ],
           div className: "row", [
             (TimeAdjust update: @updateLinechartTime)
