@@ -22,3 +22,13 @@
   stroke: #000;
   shape-rendering: crispEdges;
 }
+
+.d3 .bar rect {
+  fill: steelblue;
+  shape-rendering: crispEdges;
+}
+
+.d3 .bar text {
+  fill: #fff;
+}
+

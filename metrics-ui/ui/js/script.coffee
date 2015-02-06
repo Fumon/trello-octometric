@@ -5,7 +5,7 @@ requirejs.config
     react: 'https://fb.me/react-0.12.2'
     d3: 'https://cdnjs.cloudflare.com/ajax/libs/d3/3.4.6/d3'
 
-require ['jquery', 'd3', 'react', 'components/linechart-react'], ($, d3, React, linechart) ->
+require ['jquery', 'd3', 'react', 'components/linechart-react', 'components/histogram-react'], ($, d3, React, linechart, histogram) ->
   {div, h4, p} = React.DOM
 
   Graph = React.createFactory React.createClass
@@ -32,6 +32,30 @@ require ['jquery', 'd3', 'react', 'components/linechart-react'], ($, d3, React, 
         height: 300
         domainmargin: 20
         datanames: @props.datanames
+
+  Histograph = React.createFactory React.createClass
+    displayName: 'histograph'
+    getInitialState: ->
+      todoTotals: [] 
+    update: (url) ->
+      $.get url, ((result) ->
+        data = result
+        @setState {todoTotals: data}).bind(this)
+    componentDidMount: ->
+      @update("#{@props.urlbase}/#{@props.daysBack}")
+    componentWillReceiveProps: (nextProps) ->
+      @update("#{nextProps.urlbase}/#{nextProps.daysBack}")
+    render: ->
+      histogram
+        data: @state.todoTotals
+        margin:
+          top: 5
+          right: 15
+          bottom: 50
+          left: 30
+        width: '100%'
+        height: 300
+        bins: 30
 
   TimeAdjust = React.createFactory React.createClass
     displayName: 'timeAdjust'
@@ -74,6 +98,11 @@ require ['jquery', 'd3', 'react', 'components/linechart-react'], ($, d3, React, 
             (p className: "section-description",
               "Up and finished counts per day."),
             (Graph {urlbase: '/api/diffs/last', daysBack: @state.daysBack, datanames: ['up_count', 'finished_count']})
+          ],
+          div className: "row", [
+            (p className: "section-description",
+              "This graph shows how old the cards finished in this time period were."),
+            (Histograph {urlbase: '/api/ages/finished/last', daysBack: @state.daysBack})
           ],
           div className: "row", [
             (TimeAdjust update: @updateLinechartTime)

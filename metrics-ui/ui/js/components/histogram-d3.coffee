@@ -1,5 +1,5 @@
 define ['d3', 'jquery'], (d3, $) ->
-  linechart: () ->
+  histogram: () ->
     plotheight: () ->
       @props.height - @props.margin.top - @props.margin.bottom
     plotwidth: () ->
@@ -19,11 +19,6 @@ define ['d3', 'jquery'], (d3, $) ->
         .attr('transform',
           "translate(#{props.margin.left}, #{props.margin.top})")
 
-      # Make plotline placeholder
-      for names, i in @props.datanames
-        data.append('path')
-          .attr('class', "line#{i}")
-
       # Append axes placeholders
       data.append('g')
         .attr('class', 'x axis')
@@ -32,7 +27,7 @@ define ['d3', 'jquery'], (d3, $) ->
       data.append('g')
         .attr('class', 'y axis')
       
-      @update el, state
+      #@update el, state
     update: (el, state) ->
       # Recompute scales
       scales = @scales(state)
@@ -42,40 +37,37 @@ define ['d3', 'jquery'], (d3, $) ->
 
     scales: (state) ->
       # xscale 
-      xmin = 0
+      xmin = 1
       xmax = 0
-      if state.data.length > 0
-        xmin = new Date(state.data[state.data.length - 1].day * 1000)
-        xmax = new Date(state.data[0].day * 1000)
+      if state.data?
+        xmin = d3.min(state.data, (d) -> d.time)
+        xmax = d3.max(state.data, (d) -> d.time)
 
 
-      # yscale adjust
-      ydatamin = 9007199254740992
-      ydatamax = 0
-      for name in @props.datanames
-        ydatamin = Math.min d3.min(state.data, (d) => d[name]), ydatamin
-        ydatamax = Math.max d3.max(state.data, (d) => d[name]), ydatamax
+      # Gen bins
+      dx = Math.log10(xmax)/@props.bins
+      xbins = for i in [0..@props.bins]
+        Math.pow(10, i * dx)
       
-      ymin = Math.max 0, (ydatamin - @props.domainmargin)
-      ymax = ydatamax + @props.domainmargin
-
-      if isNaN(ymin) or isNaN(ymax)
-        ymin = 0
-        ymax = 0
-
-      xscale: d3.time.scale()
+      xscale = d3.scale.log()
         .range([0, @plotwidth()])
-        .domain([xmin, xmax])
+        .domain([1, xmax])
+      
+      state.binned_data = d3.layout.histogram()
+        .value((d) -> d.time)
+        .bins(xbins)(state.data)
+
+      state.binned_data.dx = dx
+      xscale: xscale
       yscale: d3.scale.linear()
         .range([@plotheight(), 0])
-        .domain([ymin, ymax])
+        .domain([0, d3.max(state.binned_data, (d) -> d.y)])
 
     axes: (el, scales) ->
       # Render axes
       xaxis = d3.svg.axis()
         .scale(scales.xscale)
         .orient('bottom')
-        .tickFormat(d3.time.format('%b %d'))
       yaxis = d3.svg.axis()
         .scale(scales.yscale)
         .orient('left')
@@ -83,20 +75,26 @@ define ['d3', 'jquery'], (d3, $) ->
       xaxisdrawn = d3.select(el).select('g.x.axis')
         .call(xaxis)
 
-      xaxisdrawn.selectAll('text')
-        .style('text-anchor', 'end')
-        .attr('transform', 'rotate(-65)')
       d3.select(el).select('g.y.axis')
         .call(yaxis)
 
     drawplot: (el,scales,state) ->
-      for name,i in @props.datanames
-        # Create a line function
-        lfunc = d3.svg.line()
-          .x((d) => scales.xscale(new Date(d.day*1000)))
-          .y((d) => scales.yscale(d[name]))
-          .interpolate('linear')
+      nel = d3.select(el).select(".d3-data").selectAll(".bar")
+      update = nel.data(state.binned_data)
+      bars = update.enter().append("g")
+        .attr("class", "bar")
+        .attr("transform", (d) => "translate(" +
+          scales.xscale(d.x) + "," +
+          scales.yscale(d.y) + ")")
+      binwidth = @plotwidth() / @props.bins
+      bars.append("rect")
+        .attr("x", 1)
+        .attr("width", binwidth)
+        .attr("height", (d) => @plotheight() - scales.yscale(d.y))
+      bars.append("text")
+        .attr("dy", ".75em")
+        .attr("y", 6)
+        .attr("x", binwidth / 2)
+        .attr("text-anchor", "middle")
+        .text((d) -> d3.format(",.0f")(d.y))
 
-        # Draw to plot
-        d3.select(el).select("path.line#{i}")
-          .attr('d', lfunc(state.data))

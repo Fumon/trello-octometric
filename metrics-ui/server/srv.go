@@ -101,6 +101,27 @@ func main() {
 		w.Header().Set("Content-Type", "application/json")
 		fmt.Fprint(w, output)
 	})
+
+	r.HandleFunc("/api/ages/finished/last/{num}", func(w http.ResponseWriter, r *http.Request) {
+		// Grab vars
+		vars := mux.Vars(r)
+
+		var output string
+		query := `SELECT json_agg(r) FROM (select (EXTRACT(epoch FROM closed_date - creation_date)/3600) as time from trello.cards where finished is true and closed_date > (current_date - make_interval(days := $1)) order by time) r;`
+		err := db.QueryRow(query, vars["num"]).Scan(&output)
+
+		if err != nil {
+			log.Println("Error retriving from DB, ", err)
+			w.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintln(w, "Error retriving from DB, ", err)
+			return
+		}
+
+		// Print out returned
+		w.Header().Set("Content-Type", "application/json")
+		fmt.Fprint(w, output)
+	})
+
 	r.PathPrefix("/").Handler(http.FileServer(http.Dir("../ui")))
 	http.Handle("/", r)
 
