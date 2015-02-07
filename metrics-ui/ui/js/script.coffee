@@ -11,18 +11,18 @@ require ['jquery', 'd3', 'react', 'components/linechart-react', 'components/hist
   Graph = React.createFactory React.createClass
     displayName: 'graph'
     getInitialState: ->
-      todoTotals: [] 
+      data: []
     update: (url) ->
       $.get url, ((result) ->
         data = result
-        @setState {todoTotals: data}).bind(this)
+        @setState {data: data}).bind(this)
     componentDidMount: ->
       @update("#{@props.urlbase}/#{@props.daysBack}")
     componentWillReceiveProps: (nextProps) ->
       @update("#{nextProps.urlbase}/#{nextProps.daysBack}")
     render: ->
       linechart
-        data: @state.todoTotals
+        data: @state.data
         margin:
           top: 5
           right: 15
@@ -36,18 +36,18 @@ require ['jquery', 'd3', 'react', 'components/linechart-react', 'components/hist
   Histograph = React.createFactory React.createClass
     displayName: 'histograph'
     getInitialState: ->
-      todoTotals: [] 
+      data: [] 
     update: (url) ->
       $.get url, ((result) ->
         data = result
-        @setState {todoTotals: data}).bind(this)
+        @setState {data: data}).bind(this)
     componentDidMount: ->
       @update("#{@props.urlbase}/#{@props.daysBack}")
     componentWillReceiveProps: (nextProps) ->
       @update("#{nextProps.urlbase}/#{nextProps.daysBack}")
     render: ->
       histogram
-        data: @state.todoTotals
+        data: @state.data
         margin:
           top: 5
           right: 15
@@ -64,7 +64,7 @@ require ['jquery', 'd3', 'react', 'components/linechart-react', 'components/hist
     render: ->
       div {}, [
         (React.DOM.label htmlFor: "timeinput", "Days back in time"),
-        (React.DOM.input 
+        (React.DOM.input
           className: "u-full-width"
           placeholder: "60"
           id: "timeinput"
