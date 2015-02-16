@@ -2,14 +2,11 @@ package main
 
 import (
 	"bytes"
-	"encoding/json"
 	"flag"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
-
-	"github.com/VojtechVitek/go-trello"
 )
 
 var servport = ":6862"
@@ -33,21 +30,12 @@ func main() {
 		case "POST":
 			// Got data from trello
 			// TODO confirm this is from Trello
-			decoder := json.NewDecoder(r.Body)
-			var h map[string]json.RawMessage
-			err := decoder.Decode(&h)
+			r, err := ioutil.ReadAll(r.Body)
 			if err != nil {
-				log.Fatal("Problem reading data! : ", err)
+				log.Fatal("Problem reading from webhook body: ", err)
 			}
 
-			var t trello.Action
-			err = json.Unmarshal(h["action"], &t)
-			if err != nil {
-				log.Fatal("Problem unmarshalling into trello.Action: ", err)
-			}
-
-			outstring, _ := json.MarshalIndent(t, "", "  ")
-			log.Println("Data: ", string(outstring))
+			go processAction(r, *apikey, *usertoken)
 			return
 		case "GET":
 			log.Println("Look! A GET!")
@@ -69,9 +57,10 @@ func main() {
 		log.Println("Sending: ", jsonBody)
 		buf := bytes.NewBufferString(jsonBody)
 
+		querystring := fmt.Sprintf("https://trello.com/1/tokens/%v/webhooks/?key=%v",
+			*usertoken, *apikey)
 		resp, err := http.Post(
-			fmt.Sprintf("https://trello.com/1/tokens/%v/webhooks/?key=%v",
-				*usertoken, *apikey),
+			querystring,
 			"application/json",
 			buf)
 		if err != nil {
