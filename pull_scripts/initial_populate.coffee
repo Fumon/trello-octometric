@@ -51,6 +51,9 @@ insertCard = (card) ->
     # Database connection
     pg.connect process.env['pgConnectString'],
       (err, client, done) ->
+        if err
+          error err
+          return
         dates = []
         # Grab the creation date
         creation_date = null
@@ -94,6 +97,7 @@ processCards = (cards) ->
     # Receive results
     cards.then((val) ->
       return_list = []
+      # console.log(util.inspect(val.data[0], { showHidden: true, colors: true, depth: null }))
       for card in val.data
         do (card) ->
           return_list.push new Promise insertCard(card)
