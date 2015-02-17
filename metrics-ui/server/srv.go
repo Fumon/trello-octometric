@@ -10,7 +10,7 @@ import (
 	_ "github.com/lib/pq"
 )
 
-var servport = ":6862"
+var servport = ":6870"
 
 func failOnError(err error, msg string) {
 	if err != nil {
