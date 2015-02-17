@@ -19,6 +19,8 @@ var model = flag.String("model", "", "The model to monitor")
 func main() {
 	flag.Parse()
 
+	catchUp(*model, *apikey, *usertoken)
+
 	http.HandleFunc("/webhook/todo/", func(w http.ResponseWriter, r *http.Request) {
 		switch r.Method {
 		case "HEAD":
