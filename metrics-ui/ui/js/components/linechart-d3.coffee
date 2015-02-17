@@ -86,8 +86,18 @@ define ['d3', 'jquery'], (d3, $) ->
       xaxisdrawn.selectAll('text')
         .style('text-anchor', 'end')
         .attr('transform', 'rotate(-65)')
-      d3.select(el).select('g.y.axis')
+      yaxis = d3.select(el).select('g.y.axis')
         .call(yaxis)
+
+      for name,i in @props.datanames
+        label = name.replace(/_/g, " ")
+        yaxis.append("text")
+        .attr("y", 6)
+        .attr("x", "10em")
+        .attr("dy", "#{0.71*(2*(i+1))}em")
+        .style("text-anchor", "end")
+        .text(label)
+
 
     drawplot: (el,scales,state) ->
       for name,i in @props.datanames
