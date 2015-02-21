@@ -13,6 +13,7 @@ define ['d3', 'react', 'jquery', 'components/linechart-d3'], (d3, react, $, char
         {
           datanames: @props.datanames
           domainmargin: @props.domainmargin
+          derived: @props.derived
           margin: @props.margin
           width: @props.width
           height: @props.height

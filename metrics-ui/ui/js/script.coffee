@@ -25,13 +25,14 @@ require ['jquery', 'd3', 'react', 'components/linechart-react', 'components/hist
         data: @state.data
         margin:
           top: 5
-          right: 15
+          right: 30
           bottom: 50
           left: 30
         width: '100%'
         height: 300
         domainmargin: 20
         datanames: @props.datanames
+        derived: @props.derived
 
   Histograph = React.createFactory React.createClass
     displayName: 'histograph'
@@ -92,12 +93,23 @@ require ['jquery', 'd3', 'react', 'components/linechart-react', 'components/hist
             (h4 className: "section-heading", "Basic Daily Report"),
             (p className: "section-description",
               "This graph shows the total number of tasks on the todo board over time."),
-            (Graph {urlbase: '/api/totals/last', daysBack: @state.daysBack, datanames: ['end_of_day_total']})
+            (Graph
+              urlbase: '/api/totals/last'
+              daysBack: @state.daysBack
+              datanames: ['end_of_day_total']
+            )
           ],
           div className: "row", [
             (p className: "section-description",
               "Up and finished counts per day."),
-            (Graph {urlbase: '/api/diffs/last', daysBack: @state.daysBack, datanames: ['up_count', 'finished_count']})
+            (Graph
+              urlbase: '/api/diffs/last'
+              daysBack: @state.daysBack
+              datanames: ['up_count', 'finished_count']
+              derived:
+                name: "diff"
+                func: (d) -> d.up_count - d.finished_count
+            )
           ],
           div className: "row", [
             (p className: "section-description",

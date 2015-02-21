@@ -3,15 +3,39 @@
   stroke-width: 2
 }
 
-.d3 .line0 {
+.d3 .lineend_of_day_total {
   stroke: steelblue;
 }
 
-.d3 .line1 {
-  stroke: #ff7f0e;
+.d3 .labelcolorend_of_day_total {
+  fill: steelblue;
 }
 
-.d3 .axis text {
+.d3 .lineup_count {
+  stroke: #d62728;
+}
+
+.d3 .labelcolorup_count {
+  fill: #d62728;
+}
+
+.d3 .linefinished_count {
+  stroke: #2ca02c;
+}
+
+.d3 .labelcolorfinished_count {
+  fill: #2ca02c;
+}
+
+.d3 .linediff {
+  stroke: black;
+}
+
+.d3 .labelcolordiff {
+  fill: black;
+}
+
+.d3 .axis text, .d3 .label text{
   font: 10px sans-serif;
   fill: black;
 }
