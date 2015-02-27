@@ -17,6 +17,7 @@ define ['d3', 'react', 'jquery', 'components/linechart-d3'], (d3, react, $, char
           margin: @props.margin
           width: @props.width
           height: @props.height
+          zeroline: @props.zeroline
         },
         data: @props.data
 

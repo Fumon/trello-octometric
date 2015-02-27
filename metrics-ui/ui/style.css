@@ -47,6 +47,22 @@
   shape-rendering: crispEdges;
 }
 
+.d3 .trendline {
+  fill: none;
+  opacity: 0.5;
+  stroke: #222222;
+  stroke-width: 3px;
+  shape-rendering: crispEdges;
+}
+
+.d3 .zero {
+  fill: none;
+  stroke: #000;
+  shape-rendering: crispEdges;
+  z-order: 999;
+}
+
+
 .d3 .bar rect {
   fill: steelblue;
   shape-rendering: crispEdges;

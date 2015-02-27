@@ -30,9 +30,10 @@ require ['jquery', 'd3', 'react', 'components/linechart-react', 'components/hist
           left: 30
         width: '100%'
         height: 300
-        domainmargin: 20
+        domainmargin: 5
         datanames: @props.datanames
         derived: @props.derived
+        zeroline: @props.zeroline
 
   Histograph = React.createFactory React.createClass
     displayName: 'histograph'
@@ -96,7 +97,14 @@ require ['jquery', 'd3', 'react', 'components/linechart-react', 'components/hist
             (Graph
               urlbase: '/api/totals/last'
               daysBack: @state.daysBack
-              datanames: ['end_of_day_total']
+              derived: [
+                {
+                  name: 'end_of_day_total'
+                  func: (d) -> d.end_of_day_total
+                  axis: 0
+                  trendline: true
+                }
+              ]
             )
           ],
           div className: "row", [
@@ -105,10 +113,26 @@ require ['jquery', 'd3', 'react', 'components/linechart-react', 'components/hist
             (Graph
               urlbase: '/api/diffs/last'
               daysBack: @state.daysBack
-              datanames: ['up_count', 'finished_count']
-              derived:
-                name: "diff"
-                func: (d) -> d.up_count - d.finished_count
+              zeroline:
+                axis: 0
+              derived: [
+                {
+                  name: "up_count"
+                  func: (d) -> d.up_count
+                  axis: 0
+                },
+                {
+                  name: "diff"
+                  func: (d) -> d.up_count - d.finished_count
+                  axis: 1
+                  trendline: true
+                },
+                {
+                  name: "finished_count"
+                  func: (d) -> d.finished_count * -1
+                  axis: 0
+                }
+              ]
             )
           ],
           div className: "row", [

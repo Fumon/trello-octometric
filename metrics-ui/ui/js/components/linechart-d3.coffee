@@ -19,15 +19,11 @@ define ['d3', 'jquery'], (d3, $) ->
         .attr('transform',
           "translate(#{props.margin.left}, #{props.margin.top})")
 
-      datalist = @props.datanames.slice()
-      if @props.derived?
-        datalist.push @props.derived.name
-
       # Make plotline placeholder and axis legend
-      for name, i in datalist
+      for d, i in @props.derived
         data.append('path')
-          .attr('class', "line#{name}")
-        label = name.replace(/_/g, " ")
+          .attr('class', "line#{d.name}")
+        label = d.name.replace(/_/g, " ")
         axislabel = data.append("g")
           .attr("class", "label")
           .attr("transform",
@@ -38,30 +34,50 @@ define ['d3', 'jquery'], (d3, $) ->
           .attr("dx", "-5")
           .text(label)
         axislabel.append("rect")
-          .attr("class", "labelcolor#{name}")
+          .attr("class", "labelcolor#{d.name}")
           .attr("transform",
             "translate(0, -8)")
           .attr("width", 12)
           .attr("height", 12)
           .attr("rx", 2.5)
           .attr("ry", 2.5)
+        if d.trendline == true
+          data.append('line')
+            .attr
+              class: "trendline trend#{d.name}"
+              x1: 0
+              x2: @plotwidth()
+
+
+      if @props.zeroline?
+        data.append('line')
+          .attr
+            class: "zero zero#{@props.zeroline.axis}"
+            x1: 0
+            x2: @plotwidth()
 
       # Append axes placeholders
       data.append('g')
         .attr('class', 'x axis')
         .attr('transform',
           "translate(0, #{@plotheight()})")
-      data.append('g')
-        .attr('class', 'y axis')
 
-      if @props.derived?
-        data.append('g')
-          .attr('class', 'y2 axis')
-          .attr('transform',
-            "translate(#{@plotwidth()}, 0)")
+      # Detect associate data with axes
+      @dataaxes = [[], []]
+      for d, i in @props.derived
+        if d.axis == 0
+          if @dataaxes[0].length == 0
+            data.append('g')
+              .attr('class', 'y0 axis')
+          @dataaxes[0].push(d)
+        if d.axis == 1
+          if @dataaxes[1].length == 0
+            data.append('g')
+              .attr('class', 'y1 axis')
+              .attr('transform',
+                "translate(#{@plotwidth()}, 0)")
+          @dataaxes[0].push(d)
 
-
-      
       @update el, state
     update: (el, state) ->
       # Recompute scales
@@ -79,34 +95,25 @@ define ['d3', 'jquery'], (d3, $) ->
         xmin = new Date(state.data[state.data.length - 1].day * 1000)
         xmax = new Date(state.data[0].day * 1000)
 
-
-      # yscale adjust
-      ydatamin = 9007199254740992
-      ydatamax = 0
-      for name in @props.datanames
-        ydatamin = Math.min d3.min(state.data, (d) => d[name]), ydatamin
-        ydatamax = Math.max d3.max(state.data, (d) => d[name]), ydatamax
-      
-      ymin = Math.max 0, (ydatamin - @props.domainmargin)
-      ymax = ydatamax + @props.domainmargin
-
-      if isNaN(ymin) or isNaN(ymax)
-        ymin = 0
-        ymax = 0
-
       scales_.xscale = d3.time.scale()
         .range([0, @plotwidth()])
         .domain([xmin, xmax])
-      scales_.yscale = d3.scale.linear()
-        .range([@plotheight(), 0])
-        .domain([ymin, ymax])
 
-      # Yaxis for derived
-      if @props.derived?
-        yabsmax = d3.max(state.data, (d) => Math.abs(@props.derived.func(d)))
-        scales_.derivedscale = d3.scale.linear()
-          .range([@plotheight(), 0])
-          .domain([yabsmax*-1, yabsmax])
+      for a, i in @dataaxes
+        if a.length > 0
+          max = -9007199254740992
+          min = 9007199254740992
+          for b in a
+            max = Math.max d3.max(state.data, (d) => b.func(d)), max
+            min = Math.min d3.min(state.data, (d) => b.func(d)), min
+          min = min - @props.domainmargin
+          max = max + @props.domainmargin
+          if isNaN(min) or isNaN(max)
+            min = 0
+            max = 0
+          scales_["yscale#{i}"] = d3.scale.linear()
+            .range([@plotheight(), 0])
+            .domain([min, max])
 
       scales_
 
@@ -116,9 +123,6 @@ define ['d3', 'jquery'], (d3, $) ->
         .scale(scales.xscale)
         .orient('bottom')
         .tickFormat(d3.time.format('%b %d'))
-      yaxis = d3.svg.axis()
-        .scale(scales.yscale)
-        .orient('left')
 
       xaxisdrawn = d3.select(el).select('g.x.axis')
         .call(xaxis)
@@ -126,32 +130,43 @@ define ['d3', 'jquery'], (d3, $) ->
       xaxisdrawn.selectAll('text')
         .style('text-anchor', 'end')
         .attr('transform', 'rotate(-65)')
-      yaxis = d3.select(el).select('g.y.axis')
-        .call(yaxis)
 
-      if @props.derived?
-        derivedaxis = d3.svg.axis()
-          .scale(scales.derivedscale)
-          .orient('right')
-        d3.select(el).select('g.y2.axis')
-          .call(derivedaxis)
+      for n, i in @dataaxes
+        if n.length > 0
+          yaxis = d3.svg.axis()
+            .scale(scales["yscale#{i}"])
+          if i == 0
+            yaxis.orient('left')
+          else if i == 1
+            yaxis.orient('right')
+          d3.select(el).select("g.y#{i}.axis")
+            .call(yaxis)
 
     drawplot: (el,scales,state) ->
-      dnames = @props.datanames.slice()
-      if @props.derived?
-        dnames.push @props.derived.name
+      for a,i in @dataaxes
+        yscale = scales["yscale#{i}"]
+        if @props.zeroline? && @props.zeroline.axis == i
+          d3.select(el).select("line.zero#{i}")
+            .attr
+              y1: yscale(0)
+              y2: yscale(0)
+        for n in a
+          # Create a line function
+          lfunc = d3.svg.line()
+            .x((d) => scales.xscale(new Date(d.day*1000)))
+            .y((d) => yscale(n.func(d)))
+          
+          lfunc.interpolate('monotone')
 
-      for name,i in dnames
-        # Create a line function
-        lfunc = d3.svg.line()
-          .x((d) => scales.xscale(new Date(d.day*1000)))
-        if @props.derived? && name == @props.derived.name
-          lfunc.y((d) => scales.derivedscale(@props.derived.func(d)))
-        else
-          lfunc.y((d) => scales.yscale(d[name]))
-        
-        lfunc.interpolate('monotone')
+          # Draw to plot
+          d3.select(el).select("path.line#{n.name}")
+            .attr('d', lfunc(state.data))
+          # Draw trendlines
+          if n.trendline == true && state.data.length > 0
+            yval = yscale(n.func(state.data[0]))
+            d3.select(el).select("line.trend#{n.name}")
+              .attr
+                y1: yval
+                y2: yval
+                
 
-        # Draw to plot
-        d3.select(el).select("path.line#{name}")
-          .attr('d', lfunc(state.data))
