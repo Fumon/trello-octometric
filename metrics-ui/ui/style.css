@@ -68,6 +68,10 @@
   shape-rendering: crispEdges;
 }
 
+.d3 .bar text.invert {
+  fill: #000;
+}
+
 .d3 .bar text {
   fill: #fff;
 }

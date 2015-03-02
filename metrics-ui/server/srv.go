@@ -107,7 +107,7 @@ func main() {
 		vars := mux.Vars(r)
 
 		var output string
-		query := `SELECT json_agg(r) FROM (select (EXTRACT(epoch FROM closed_date - creation_date)/3600) as time from trello.cards where finished is true and closed_date > (current_date - make_interval(days := $1)) order by time) r;`
+		query := `SELECT json_agg(r) FROM (select ((EXTRACT(epoch FROM (closed_date - creation_date)))/60)::int as time from trello.cards where finished is true and closed_date > (current_date - make_interval(days := $1)) order by time) r;`
 		err := db.QueryRow(query, vars["num"]).Scan(&output)
 
 		if err != nil {
