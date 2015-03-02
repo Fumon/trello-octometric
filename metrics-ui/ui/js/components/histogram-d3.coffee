@@ -92,7 +92,6 @@ define ['d3', 'jquery'], (d3, $) ->
       state.binned_data = d3.layout.histogram()
         .value((d) -> d.time)
         .bins(xbins)(state.data)
-      console.log(state.binned_data)
 
       xscale: xscale
       yscale: d3.scale.linear()
