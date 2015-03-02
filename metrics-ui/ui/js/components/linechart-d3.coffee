@@ -148,6 +148,7 @@ define ['d3', 'jquery'], (d3, $) ->
         if @props.zeroline? && @props.zeroline.axis == i
           d3.select(el).select("line.zero#{i}")
             .attr
+              x2: @plotwidth()
               y1: yscale(0)
               y2: yscale(0)
         for n in a
@@ -166,6 +167,7 @@ define ['d3', 'jquery'], (d3, $) ->
             yval = yscale(n.func(state.data[0]))
             d3.select(el).select("line.trend#{n.name}")
               .attr
+                x2: @plotwidth()
                 y1: yval
                 y2: yval
                 
