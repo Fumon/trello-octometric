@@ -13,39 +13,6 @@ import (
 	_ "github.com/lib/pq"
 )
 
-type Action struct {
-	Id   string `json:"id"`
-	Data struct {
-		List struct {
-			Id string `json:"id"`
-		} `json:"list"`
-		Card struct {
-			Id     string `json:"id"`
-			Name   string `json:"name"`
-			Closed bool   `json:"closed"`
-		} `json:"card"`
-		Old struct {
-			Closed bool `json:"closed"`
-		} `json:"old"`
-	} `json:"data"`
-	Type string `json:"type"`
-	Date string `json:"date"`
-}
-
-type BoardCard struct {
-	Id               string   `json:"id"`
-	Closed           bool     `json:"closed"`
-	IdList           string   `json:"idList"`
-	Name             string   `json:"name"`
-	DateLastActivity string   `json:"dateLastActivity"`
-	Actions          []Action `json:"actions"`
-}
-
-// Struct for processing
-type WebhookAction struct {
-	Action `json:"action"`
-}
-
 // TODO: Put this in a config file
 var finishedLists map[string]bool = map[string]bool{
 	"5209128b758c3b4f2e003063": true,
@@ -236,6 +203,13 @@ func processAction(data []byte, apikey string, token string) {
 			if err != nil {
 				log.Println("Problem with Upsert")
 			}
+		} else if !wh.Action.Data.Card.Closed && wh.Action.Data.Old.Closed {
+			// Unarchive card
+			card := wh.Action.Data.Card
+			err = insertListCard(ndb, card.Id, card.Name, wh.Action.Date)
+			if err != nil {
+				log.Println("Problem with Upsert")
+			}
 		}
 	} else if wh.Action.Type == "createCard" {
 		log.Println("Card Created")
@@ -245,5 +219,49 @@ func processAction(data []byte, apikey string, token string) {
 		if err != nil {
 			log.Println("Problem with Upsert")
 		}
+	} else if wh.Action.Type == "moveCardFromBoard" || wh.Action.Type == "moveCardToBoard" {
+		// Unarchive card
+
+		closed := (wh.Action.Type == "moveCardFromBoard")
+		card := wh.Action.Data.Card
+
+		if closed {
+			err = removeListCard(ndb, card.Id, wh.Action.Date)
+			if err != nil {
+				log.Println("Problem with Upsert")
+			}
+		} else {
+			err = insertListCard(ndb, card.Id, card.Name, wh.Action.Date)
+			if err != nil {
+				log.Println("Problem with Upsert")
+			}
+		}
+	} else if testListEventIncoming(wh.Action) || testListEventOutgoing(wh.Action) {
+		// Get all cards in list
+
+		var cards []BoardCard
+		cardsstr, err := queryListCards(wh.Action.Data.List.Id, apikey, token)
+		if err != nil {
+			log.Fatal("JSON error, ", err)
+		}
+
+		json.Unmarshal(cardsstr, &cards)
+
+		closed := testListEventOutgoing(wh.Action)
+		for _, c := range cards {
+			if closed {
+				err = removeListCard(ndb, c.Id, wh.Action.Date)
+				if err != nil {
+					log.Println("Problem with Upsert")
+				}
+			} else {
+				err = insertListCard(ndb, c.Id, c.Name, wh.Action.Date)
+				if err != nil {
+					log.Println("Problem with Upsert")
+				}
+			}
+		}
+	} else {
+		debugJSON(data)
 	}
 }
