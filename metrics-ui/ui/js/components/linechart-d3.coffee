@@ -157,7 +157,8 @@ define ['d3', 'jquery'], (d3, $) ->
             .x((d) => scales.xscale(new Date(d.day*1000)))
             .y((d) => yscale(n.func(d)))
           
-          lfunc.interpolate('monotone')
+          lfunc.tension(0.9)
+          lfunc.interpolate('cardinal')
 
           # Draw to plot
           d3.select(el).select("path.line#{n.name}")
