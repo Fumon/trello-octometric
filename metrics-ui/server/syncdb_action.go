@@ -258,7 +258,7 @@ func syncDB(board, apikey, token string) error {
 					} else {
 						//log.Printf("Listmoves: %+v\n", listchanges)
 						debugJSON(cstr)
-						log.Fatal("Moved and List changes")
+						log.Println("Moved and List changes")
 					}
 				}
 			} else if card.IdList != "" {
