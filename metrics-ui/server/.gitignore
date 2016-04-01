@@ -1,4 +1,5 @@
 webhooks
 srv
 start_webhooks
+syncDB.sh
 syncdb
